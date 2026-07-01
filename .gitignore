@@ -1,14 +1,27 @@
-GitHub'ın bize sağlayacağı en büyük avantaj
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
 
-Asıl amacımız sadece yedek almak değil.
+# Virtual environments
+.venv/
+venv/
+env/
 
-Yeni sohbetlerde sen bana sadece şunu diyebilirsin:
+# Environment variables
+.env
 
-"ATLAS GitHub reposunu referans al. docs klasörünü ve strategy klasörünü incele. SMC V4'e devam edelim."
+# Runtime data
+data/
+logs/
 
-Böylece:
+# Reports (istersen tutabiliriz, şimdilik hariç bırakıyorum)
+reports/*.txt
 
-Sohbet geçmişine bağımlılık azalır.
-Proje tek bir kaynakta toplanır.
-Değişiklikleri takip etmek kolaylaşır.
-İleride farklı bilgisayarlarda veya ekip çalışmasında da rahat edersin
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
