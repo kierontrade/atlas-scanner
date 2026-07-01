@@ -1,0 +1,138 @@
+============================================================
+ATLAS SCANNER REPORT
+============================================================
+Time: 2026-07-01 22:48:56
+
+Total futures       : 793
+USDT futures        : 743
+Market cap matched  : 72
+Hard Filter passed  : 10
+READY               : 0
+WATCH               : 2
+WAIT                : 7
+
+READY CANDIDATES
+------------------------------------------------------------
+No READY candidates.
+
+WATCH CANDIDATES
+------------------------------------------------------------
+SUI-USDT
+  Atlas Score : 73.7
+  Status      : WATCH
+  Type        : LONG_LIMIT_ZONE
+  MQS         : 51
+  Trend       : 90.0 BULLISH
+  RR          : 2.14
+  Entry       : 0.6807
+  Stop        : 0.66614
+  TP          : 0.7119
+  Distance    : 4.48%
+  Reasons     : RR uygun, Stop yapısı uygun, Hedef yapısı uygun, Fiyat entry bölgesinden uzak, izleme
+
+AVAX-USDT
+  Atlas Score : 65.95
+  Status      : WATCH
+  Type        : LONG_LIMIT_ZONE
+  MQS         : 56
+  Trend       : 75.0 BULLISH
+  RR          : 2.14
+  Entry       : 6.40375
+  Stop        : 6.2109
+  TP          : 6.817
+  Distance    : 3.36%
+  Reasons     : RR uygun, Stop yapısı uygun, Hedef yapısı uygun, Fiyat entry bölgesinden uzak, izleme
+
+
+WAIT CANDIDATES
+------------------------------------------------------------
+BTC-USDT
+  Atlas Score : 50
+  Status      : WAIT
+  Type        : WAIT
+  MQS         : 91
+  Trend       : 70.0 NEUTRAL
+  RR          : 0
+  Entry       : 60785.0
+  Stop        : None
+  TP          : None
+  Distance    : None%
+  Reasons     : Trend yönü net değil
+
+SOL-USDT
+  Atlas Score : 50
+  Status      : WAIT
+  Type        : WAIT
+  MQS         : 70
+  Trend       : 65.0 NEUTRAL
+  RR          : 0
+  Entry       : 72.604
+  Stop        : None
+  TP          : None
+  Distance    : None%
+  Reasons     : Trend yönü net değil
+
+LINK-USDT
+  Atlas Score : 43.7
+  Status      : WAIT
+  Type        : WAIT
+  MQS         : 56
+  Trend       : 70.0 NEUTRAL
+  RR          : 0
+  Entry       : 7.448
+  Stop        : None
+  TP          : None
+  Distance    : None%
+  Reasons     : Trend yönü net değil
+
+ETH-USDT
+  Atlas Score : 43.25
+  Status      : WAIT
+  Type        : WAIT
+  MQS         : 85
+  Trend       : 60.0 NEUTRAL
+  RR          : 0
+  Entry       : 1606.25
+  Stop        : None
+  TP          : None
+  Distance    : None%
+  Reasons     : Trend yönü net değil
+
+INJ-USDT
+  Atlas Score : 40.9
+  Status      : WAIT
+  Type        : WAIT
+  MQS         : 42
+  Trend       : 50.0 NEUTRAL
+  RR          : 0
+  Entry       : 4.847
+  Stop        : None
+  TP          : None
+  Distance    : None%
+  Reasons     : Trend yönü net değil
+
+LTC-USDT
+  Atlas Score : 40
+  Status      : WAIT
+  Type        : WAIT_STRUCTURE_CONFLICT
+  MQS         : 54
+  Trend       : 80.0 BULLISH
+  RR          : 0
+  Entry       : 43.13
+  Stop        : None
+  TP          : None
+  Distance    : None%
+  Reasons     : Trend ile SMC yapısı çelişiyor
+
+AAVE-USDT
+  Atlas Score : 38.45
+  Status      : WAIT
+  Type        : WAIT
+  MQS         : 61
+  Trend       : 60.0 NEUTRAL
+  RR          : 0
+  Entry       : 95.42
+  Stop        : None
+  TP          : None
+  Distance    : None%
+  Reasons     : Trend yönü net değil

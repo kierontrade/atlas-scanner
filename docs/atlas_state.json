@@ -1,0 +1,30 @@
+{
+  "project": "ATLAS",
+  "version": "0.65",
+  "status": "ACTIVE",
+
+  "completed": {
+    "scanner": true,
+    "market_quality": true,
+    "hard_filter": true,
+    "trend_engine": true,
+    "setup_engine": true,
+    "atlas_score_v2": true,
+    "smc_v3": true,
+    "parallel_api": true,
+    "reports": true
+  },
+
+  "current_step": "SMC_V4",
+
+  "next_modules": [
+    "CHOCH",
+    "Order Block",
+    "Breaker Block",
+    "Mitigation Block",
+    "Supply Demand",
+    "Premium Discount",
+    "Equal High Low",
+    "Liquidity Pool"
+  ]
+}

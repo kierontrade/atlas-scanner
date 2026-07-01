@@ -1,0 +1,610 @@
+[
+    {
+        "symbol": "BTC-USDT",
+        "base": "BTC",
+        "name": "Bitcoin",
+        "market_cap": 1200262249319,
+        "rank": 1,
+        "coingecko_id": "bitcoin"
+    },
+    {
+        "symbol": "ETH-USDT",
+        "base": "ETH",
+        "name": "Ethereum",
+        "market_cap": 194688358666,
+        "rank": 2,
+        "coingecko_id": "ethereum"
+    },
+    {
+        "symbol": "LINK-USDT",
+        "base": "LINK",
+        "name": "Chainlink",
+        "market_cap": 5517821409,
+        "rank": 21,
+        "coingecko_id": "chainlink"
+    },
+    {
+        "symbol": "BCH-USDT",
+        "base": "BCH",
+        "name": "Bitcoin Cash",
+        "market_cap": 4281870035,
+        "rank": 25,
+        "coingecko_id": "bitcoin-cash"
+    },
+    {
+        "symbol": "ADA-USDT",
+        "base": "ADA",
+        "name": "Cardano",
+        "market_cap": 5761892054,
+        "rank": 18,
+        "coingecko_id": "cardano"
+    },
+    {
+        "symbol": "XRP-USDT",
+        "base": "XRP",
+        "name": "XRP",
+        "market_cap": 65763314761,
+        "rank": 6,
+        "coingecko_id": "ripple"
+    },
+    {
+        "symbol": "LTC-USDT",
+        "base": "LTC",
+        "name": "Litecoin",
+        "market_cap": 3278053064,
+        "rank": 27,
+        "coingecko_id": "litecoin"
+    },
+    {
+        "symbol": "DOT-USDT",
+        "base": "DOT",
+        "name": "Polkadot",
+        "market_cap": 1420136614,
+        "rank": 50,
+        "coingecko_id": "polkadot"
+    },
+    {
+        "symbol": "AVAX-USDT",
+        "base": "AVAX",
+        "name": "Avalanche",
+        "market_cap": 2889218624,
+        "rank": 31,
+        "coingecko_id": "avalanche-2"
+    },
+    {
+        "symbol": "ALGO-USDT",
+        "base": "ALGO",
+        "name": "Algorand",
+        "market_cap": 755238585,
+        "rank": 80,
+        "coingecko_id": "algorand"
+    },
+    {
+        "symbol": "SHIB-USDT",
+        "base": "SHIB",
+        "name": "Shiba Inu",
+        "market_cap": 2541395539,
+        "rank": 35,
+        "coingecko_id": "shiba-inu"
+    },
+    {
+        "symbol": "ICP-USDT",
+        "base": "ICP",
+        "name": "Internet Computer",
+        "market_cap": 1198253355,
+        "rank": 61,
+        "coingecko_id": "internet-computer"
+    },
+    {
+        "symbol": "VET-USDT",
+        "base": "VET",
+        "name": "VeChain",
+        "market_cap": 390645090,
+        "rank": 118,
+        "coingecko_id": "vechain"
+    },
+    {
+        "symbol": "SOL-USDT",
+        "base": "SOL",
+        "name": "Solana",
+        "market_cap": 44890358708,
+        "rank": 7,
+        "coingecko_id": "solana"
+    },
+    {
+        "symbol": "NEAR-USDT",
+        "base": "NEAR",
+        "name": "NEAR Protocol",
+        "market_cap": 2374746990,
+        "rank": 38,
+        "coingecko_id": "near"
+    },
+    {
+        "symbol": "ATOM-USDT",
+        "base": "ATOM",
+        "name": "Cosmos Hub",
+        "market_cap": 799641897,
+        "rank": 77,
+        "coingecko_id": "cosmos"
+    },
+    {
+        "symbol": "UNI-USDT",
+        "base": "UNI",
+        "name": "Uniswap",
+        "market_cap": 1734874660,
+        "rank": 44,
+        "coingecko_id": "uniswap"
+    },
+    {
+        "symbol": "FIL-USDT",
+        "base": "FIL",
+        "name": "Filecoin",
+        "market_cap": 588355732,
+        "rank": 96,
+        "coingecko_id": "filecoin"
+    },
+    {
+        "symbol": "AAVE-USDT",
+        "base": "AAVE",
+        "name": "Aave",
+        "market_cap": 1307217316,
+        "rank": 58,
+        "coingecko_id": "aave"
+    },
+    {
+        "symbol": "DOGE-USDT",
+        "base": "DOGE",
+        "name": "Dogecoin",
+        "market_cap": 11301500047,
+        "rank": 11,
+        "coingecko_id": "dogecoin"
+    },
+    {
+        "symbol": "TRX-USDT",
+        "base": "TRX",
+        "name": "TRON",
+        "market_cap": 30136781207,
+        "rank": 8,
+        "coingecko_id": "tron"
+    },
+    {
+        "symbol": "XLM-USDT",
+        "base": "XLM",
+        "name": "Stellar",
+        "market_cap": 6755468585,
+        "rank": 16,
+        "coingecko_id": "stellar"
+    },
+    {
+        "symbol": "ZEC-USDT",
+        "base": "ZEC",
+        "name": "Zcash",
+        "market_cap": 6930243814,
+        "rank": 15,
+        "coingecko_id": "zcash"
+    },
+    {
+        "symbol": "DASH-USDT",
+        "base": "DASH",
+        "name": "Dash",
+        "market_cap": 423289658,
+        "rank": 113,
+        "coingecko_id": "dash"
+    },
+    {
+        "symbol": "XMR-USDT",
+        "base": "XMR",
+        "name": "Monero",
+        "market_cap": 5712494545,
+        "rank": 19,
+        "coingecko_id": "monero"
+    },
+    {
+        "symbol": "HBAR-USDT",
+        "base": "HBAR",
+        "name": "Hedera",
+        "market_cap": 3117233414,
+        "rank": 28,
+        "coingecko_id": "hedera-hashgraph"
+    },
+    {
+        "symbol": "BNB-USDT",
+        "base": "BNB",
+        "name": "BNB",
+        "market_cap": 74206022765,
+        "rank": 4,
+        "coingecko_id": "binancecoin"
+    },
+    {
+        "symbol": "ETC-USDT",
+        "base": "ETC",
+        "name": "Ethereum Classic",
+        "market_cap": 1094420787,
+        "rank": 63,
+        "coingecko_id": "ethereum-classic"
+    },
+    {
+        "symbol": "CRO-USDT",
+        "base": "CRO",
+        "name": "Cronos",
+        "market_cap": 2520398119,
+        "rank": 36,
+        "coingecko_id": "crypto-com-chain"
+    },
+    {
+        "symbol": "LUNC-USDT",
+        "base": "LUNC",
+        "name": "Terra Luna Classic",
+        "market_cap": 337422526,
+        "rank": 125,
+        "coingecko_id": "terra-luna"
+    },
+    {
+        "symbol": "INJ-USDT",
+        "base": "INJ",
+        "name": "Injective",
+        "market_cap": 480581261,
+        "rank": 106,
+        "coingecko_id": "injective-protocol"
+    },
+    {
+        "symbol": "APT-USDT",
+        "base": "APT",
+        "name": "Aptos",
+        "market_cap": 495434772,
+        "rank": 103,
+        "coingecko_id": "aptos"
+    },
+    {
+        "symbol": "QNT-USDT",
+        "base": "QNT",
+        "name": "Quant",
+        "market_cap": 980960868,
+        "rank": 67,
+        "coingecko_id": "quant-network"
+    },
+    {
+        "symbol": "FET-USDT",
+        "base": "FET",
+        "name": "Artificial Superintelligence Alliance",
+        "market_cap": 404135521,
+        "rank": 117,
+        "coingecko_id": "fetch-ai"
+    },
+    {
+        "symbol": "STX-USDT",
+        "base": "STX",
+        "name": "Stacks",
+        "market_cap": 308578258,
+        "rank": 133,
+        "coingecko_id": "blockstack"
+    },
+    {
+        "symbol": "SUN-USDT",
+        "base": "SUN",
+        "name": "Sun Token",
+        "market_cap": 315010251,
+        "rank": 129,
+        "coingecko_id": "sun-token"
+    },
+    {
+        "symbol": "ARB-USDT",
+        "base": "ARB",
+        "name": "Arbitrum",
+        "market_cap": 492937272,
+        "rank": 105,
+        "coingecko_id": "arbitrum"
+    },
+    {
+        "symbol": "SUI-USDT",
+        "base": "SUI",
+        "name": "Sui",
+        "market_cap": 2888256521,
+        "rank": 32,
+        "coingecko_id": "sui"
+    },
+    {
+        "symbol": "OKB-USDT",
+        "base": "OKB",
+        "name": "OKB",
+        "market_cap": 1687507041,
+        "rank": 45,
+        "coingecko_id": "okb"
+    },
+    {
+        "symbol": "WLD-USDT",
+        "base": "WLD",
+        "name": "Worldcoin",
+        "market_cap": 1373275468,
+        "rank": 56,
+        "coingecko_id": "worldcoin-wld"
+    },
+    {
+        "symbol": "SEI-USDT",
+        "base": "SEI",
+        "name": "Sei",
+        "market_cap": 318745236,
+        "rank": 128,
+        "coingecko_id": "sei-network"
+    },
+    {
+        "symbol": "KAS-USDT",
+        "base": "KAS",
+        "name": "Kaspa",
+        "market_cap": 856337946,
+        "rank": 74,
+        "coingecko_id": "kaspa"
+    },
+    {
+        "symbol": "TIA-USDT",
+        "base": "TIA",
+        "name": "Celestia",
+        "market_cap": 343762313,
+        "rank": 124,
+        "coingecko_id": "celestia"
+    },
+    {
+        "symbol": "CAKE-USDT",
+        "base": "CAKE",
+        "name": "PancakeSwap",
+        "market_cap": 429448580,
+        "rank": 112,
+        "coingecko_id": "pancakeswap-token"
+    },
+    {
+        "symbol": "PYTH-USDT",
+        "base": "PYTH",
+        "name": "Pyth Network",
+        "market_cap": 312083447,
+        "rank": 131,
+        "coingecko_id": "pyth-network"
+    },
+    {
+        "symbol": "JTO-USDT",
+        "base": "JTO",
+        "name": "Jito",
+        "market_cap": 382620140,
+        "rank": 120,
+        "coingecko_id": "jito-governance-token"
+    },
+    {
+        "symbol": "ONDO-USDT",
+        "base": "ONDO",
+        "name": "Ondo",
+        "market_cap": 1548987771,
+        "rank": 47,
+        "coingecko_id": "ondo-finance"
+    },
+    {
+        "symbol": "TAO-USDT",
+        "base": "TAO",
+        "name": "Bittensor",
+        "market_cap": 1957130470,
+        "rank": 41,
+        "coingecko_id": "bittensor"
+    },
+    {
+        "symbol": "JUP-USDT",
+        "base": "JUP",
+        "name": "Jupiter",
+        "market_cap": 786512084,
+        "rank": 79,
+        "coingecko_id": "jupiter-exchange-solana"
+    },
+    {
+        "symbol": "ENA-USDT",
+        "base": "ENA",
+        "name": "Ethena",
+        "market_cap": 667452443,
+        "rank": 91,
+        "coingecko_id": "ethena"
+    },
+    {
+        "symbol": "RENDER-USDT",
+        "base": "RENDER",
+        "name": "Render",
+        "market_cap": 792068443,
+        "rank": 78,
+        "coingecko_id": "render-token"
+    },
+    {
+        "symbol": "POL-USDT",
+        "base": "POL",
+        "name": "POL (ex-MATIC)",
+        "market_cap": 753328515,
+        "rank": 82,
+        "coingecko_id": "polygon-ecosystem-token"
+    },
+    {
+        "symbol": "GRASS-USDT",
+        "base": "GRASS",
+        "name": "Grass",
+        "market_cap": 312444437,
+        "rank": 130,
+        "coingecko_id": "grass"
+    },
+    {
+        "symbol": "SPX-USDT",
+        "base": "SPX",
+        "name": "SPX6900",
+        "market_cap": 334881963,
+        "rank": 126,
+        "coingecko_id": "spx6900"
+    },
+    {
+        "symbol": "MORPHO-USDT",
+        "base": "MORPHO",
+        "name": "Morpho",
+        "market_cap": 1384124985,
+        "rank": 54,
+        "coingecko_id": "morpho"
+    },
+    {
+        "symbol": "AERO-USDT",
+        "base": "AERO",
+        "name": "Aerodrome Finance",
+        "market_cap": 465022138,
+        "rank": 109,
+        "coingecko_id": "aerodrome-finance"
+    },
+    {
+        "symbol": "PENGU-USDT",
+        "base": "PENGU",
+        "name": "Pudgy Penguins",
+        "market_cap": 390018127,
+        "rank": 119,
+        "coingecko_id": "pudgy-penguins"
+    },
+    {
+        "symbol": "HYPE-USDT",
+        "base": "HYPE",
+        "name": "Hyperliquid",
+        "market_cap": 14352547681,
+        "rank": 10,
+        "coingecko_id": "hyperliquid"
+    },
+    {
+        "symbol": "VIRTUAL-USDT",
+        "base": "VIRTUAL",
+        "name": "Virtuals Protocol",
+        "market_cap": 361892568,
+        "rank": 122,
+        "coingecko_id": "virtual-protocol"
+    },
+    {
+        "symbol": "VVV-USDT",
+        "base": "VVV",
+        "name": "Venice Token",
+        "market_cap": 687165518,
+        "rank": 87,
+        "coingecko_id": "venice-token"
+    },
+    {
+        "symbol": "PI-USDT",
+        "base": "PI",
+        "name": "Pi Network",
+        "market_cap": 1251639772,
+        "rank": 59,
+        "coingecko_id": "pi-network"
+    },
+    {
+        "symbol": "PAXG-USDT",
+        "base": "PAXG",
+        "name": "PAX Gold",
+        "market_cap": 1837710534,
+        "rank": 43,
+        "coingecko_id": "pax-gold"
+    },
+    {
+        "symbol": "XAUT-USDT",
+        "base": "XAUT",
+        "name": "Tether Gold",
+        "market_cap": 2488216271,
+        "rank": 37,
+        "coingecko_id": "tether-gold"
+    },
+    {
+        "symbol": "M-USDT",
+        "base": "M",
+        "name": "MemeCore",
+        "market_cap": 1386403871,
+        "rank": 52,
+        "coingecko_id": "memecore"
+    },
+    {
+        "symbol": "PUMP-USDT",
+        "base": "PUMP",
+        "name": "Pump.fun",
+        "market_cap": 603461900,
+        "rank": 93,
+        "coingecko_id": "pump-fun"
+    },
+    {
+        "symbol": "VELVET-USDT",
+        "base": "VELVET",
+        "name": "Velvet",
+        "market_cap": 602740574,
+        "rank": 94,
+        "coingecko_id": "velvet"
+    },
+    {
+        "symbol": "MNT-USDT",
+        "base": "MNT",
+        "name": "Mantle",
+        "market_cap": 1397604911,
+        "rank": 53,
+        "coingecko_id": "mantle"
+    },
+    {
+        "symbol": "WLFI-USDT",
+        "base": "WLFI",
+        "name": "World Liberty Financial",
+        "market_cap": 1879020522,
+        "rank": 42,
+        "coingecko_id": "world-liberty-financial"
+    },
+    {
+        "symbol": "SKY-USDT",
+        "base": "SKY",
+        "name": "Sky",
+        "market_cap": 1229430453,
+        "rank": 60,
+        "coingecko_id": "sky"
+    },
+    {
+        "symbol": "ASTER-USDT",
+        "base": "ASTER",
+        "name": "Aster",
+        "market_cap": 1682953803,
+        "rank": 46,
+        "coingecko_id": "aster-2"
+    },
+    {
+        "symbol": "LAB-USDT",
+        "base": "LAB",
+        "name": "LAB",
+        "market_cap": 2732920517,
+        "rank": 33,
+        "coingecko_id": "lab"
+    },
+    {
+        "symbol": "CC-USDT",
+        "base": "CC",
+        "name": "Canton",
+        "market_cap": 5550612768,
+        "rank": 20,
+        "coingecko_id": "canton-network"
+    },
+    {
+        "symbol": "BEAT-USDT",
+        "base": "BEAT",
+        "name": "Audiera",
+        "market_cap": 852377914,
+        "rank": 75,
+        "coingecko_id": "audiera"
+    },
+    {
+        "symbol": "STABLE-USDT",
+        "base": "STABLE",
+        "name": "​​Stable",
+        "market_cap": 826489994,
+        "rank": 76,
+        "coingecko_id": "stable-2"
+    },
+    {
+        "symbol": "NIGHT-USDT",
+        "base": "NIGHT",
+        "name": "Midnight",
+        "market_cap": 524044685,
+        "rank": 101,
+        "coingecko_id": "midnight-3"
+    },
+    {
+        "symbol": "DEXE-USDT",
+        "base": "DEXE",
+        "name": "DeXe",
+        "market_cap": 1063153166,
+        "rank": 64,
+        "coingecko_id": "dexe"
+    }
+]
