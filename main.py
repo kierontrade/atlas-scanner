@@ -18,7 +18,11 @@ from reports.report_writer import write_atlas_report
 
 
 def get_ticker_map(tickers):
-    return {ticker.get("symbol"): ticker for ticker in tickers if ticker.get("symbol")}
+    return {
+        ticker.get("symbol"): ticker
+        for ticker in tickers
+        if ticker.get("symbol")
+    }
 
 
 def calculate_volume_usd(volume, last_price):
@@ -51,9 +55,28 @@ def apply_score_caps(score, setup_status, setup_type, trend_direction):
     return score
 
 
-def calculate_atlas_score(mqs, trend_score, setup_score, smc_score, setup_status, setup_type, trend_direction):
-    score = raw_atlas_score(mqs, trend_score, setup_score, smc_score)
-    return apply_score_caps(score, setup_status, setup_type, trend_direction)
+def calculate_atlas_score(
+    mqs,
+    trend_score,
+    setup_score,
+    smc_score,
+    setup_status,
+    setup_type,
+    trend_direction,
+):
+    score = raw_atlas_score(
+        mqs,
+        trend_score,
+        setup_score,
+        smc_score,
+    )
+
+    return apply_score_caps(
+        score,
+        setup_status,
+        setup_type,
+        trend_direction,
+    )
 
 
 def print_candidate(item):
@@ -88,10 +111,19 @@ def print_candidate(item):
     )
 
 
+def build_stats(contracts, usdt_contracts, matched_contracts, passed):
+    return {
+        "total_futures": len(contracts),
+        "usdt_futures": len(usdt_contracts),
+        "matched": len(matched_contracts),
+        "passed": len(passed),
+    }
+
+
 def main():
     print("=" * 50)
     print("ATLAS SCANNER V1")
-    print("Atlas Score V2")
+    print("Atlas Score V2 / SMC V5")
     print("=" * 50)
 
     try:
@@ -100,6 +132,7 @@ def main():
         ticker_map = get_ticker_map(tickers)
 
         usdt_contracts = filter_usdt_contracts(contracts)
+
         coins = get_top_coins(limit=250)
 
         matched_contracts = match_contracts_with_coins(
@@ -111,13 +144,20 @@ def main():
         symbols = [item["symbol"] for item in matched_contracts]
 
         print(f"\nParalel metrik çekiliyor: {len(symbols)} parite...")
-        metrics_map = asyncio.run(get_market_metrics_bulk(symbols, batch_size=10))
+
+        metrics_map = asyncio.run(
+            get_market_metrics_bulk(
+                symbols,
+                batch_size=10,
+            )
+        )
 
         passed = []
         failed = []
 
         for item in matched_contracts:
             symbol = item["symbol"]
+
             ticker = ticker_map.get(symbol, {})
 
             item["last_price"] = ticker.get("lastPrice")
@@ -140,6 +180,7 @@ def main():
             item.update(metrics)
 
             filter_result = passes_hard_filters(item)
+
             item["hard_filter_passed"] = filter_result["passed"]
             item["hard_filter_reasons"] = filter_result["reasons"]
 
@@ -154,11 +195,13 @@ def main():
 
             smc = detect_structure(symbol, "1h")
             item.update(smc)
+            item["smc"] = smc
 
             setup = calculate_setup_score(
                 symbol,
                 item["trend_direction"],
                 item.get("structure", "RANGE"),
+                smc=smc,
             )
             item.update(setup)
 
@@ -181,11 +224,28 @@ def main():
 
             passed.append(item)
 
-        passed.sort(key=lambda x: x.get("atlas_score", 0), reverse=True)
+        passed.sort(
+            key=lambda x: x.get("atlas_score", 0),
+            reverse=True,
+        )
 
-        ready = [x for x in passed if x.get("setup_status") == "READY"]
-        watch = [x for x in passed if x.get("setup_status") == "WATCH"]
-        wait = [x for x in passed if x.get("setup_status") == "WAIT"]
+        ready = [
+            item
+            for item in passed
+            if item.get("setup_status") == "READY"
+        ]
+
+        watch = [
+            item
+            for item in passed
+            if item.get("setup_status") == "WATCH"
+        ]
+
+        wait = [
+            item
+            for item in passed
+            if item.get("setup_status") == "WAIT"
+        ]
 
         save_json(passed, "atlas_candidates.json")
         save_json(ready, "atlas_ready.json")
@@ -193,16 +253,20 @@ def main():
         save_json(wait, "atlas_wait.json")
         save_json(failed, "market_quality_failed.json")
 
+        stats = build_stats(
+            contracts,
+            usdt_contracts,
+            matched_contracts,
+            passed,
+        )
+
         write_atlas_report(
-            ready,
-            watch,
-            wait,
-            {
-                "total_futures": len(contracts),
-                "usdt_futures": len(usdt_contracts),
-                "matched": len(matched_contracts),
-                "passed": len(passed),
-            },
+            candidates=passed,
+            ready=ready,
+            watch=watch,
+            wait=wait,
+            failed=failed,
+            stats=stats,
         )
 
         print("\n✓ Atlas tarama tamamlandı")

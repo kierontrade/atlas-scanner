@@ -1,75 +1,50 @@
 # Decisions
 
-## Atlas Score
+## Atlas Score V2
 
-MQS = 20%
-
-Trend = 25%
-
-Setup = 30%
-
+MQS = 20%  
+Trend = 25%  
+Setup = 30%  
 SMC = 25%
 
 ## Hard Filter
 
-MarketCap
+- MarketCap
+- USD Volume
+- Spread
+- Funding
+- OI
+- ATR
+- OrderBook
 
-USD Volume
+## Trend Engine
 
-Spread
+Trend engine 1D, 4H ve 1H verileri üzerinden çalışır.
 
-Funding
+Kullanılan ana yapı:
 
-OI
+- EMA20
+- EMA50
+- Momentum
+- Multi-timeframe trend uyumu
 
-ATR
+## Setup Engine
 
-OrderBook
+Setup durumları:
 
-## Trend
+- READY
+- WATCH
+- WAIT
 
-1D
+Setup engine trend yönü, SMC yapısı, entry bölgesi, stop, target ve RR değerlerini birlikte değerlendirir.
 
-4H
+Trend ile SMC yapısı çelişirse setup `WAIT_STRUCTURE_CONFLICT` olur.
 
-1H
+## SMC V5
 
-EMA20
+SMC motoru modüler hale getirildi.
 
-EMA50
+Ana klasör:
 
-Momentum
-
-## Setup
-
-READY
-
-WATCH_NEAR
-
-WATCH
-
-WAIT
-
-## SMC
-
-Swing
-
-BOS
-
-MSS
-
-Liquidity Sweep
-
-FVG
-
-IFVG
-
-Conflict Filter
-
-## Performance
-
-Market Metrics paralel (asyncio)
-
-## Hedef
-
-Kurumsal seviyede LONG/SHORT üreten profesyonel Trading Engine.
+```text
+strategy/smc/

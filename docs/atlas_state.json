@@ -1,8 +1,8 @@
 {
   "project": "ATLAS",
-  "version": "0.65",
+  "version": "0.75",
   "status": "ACTIVE",
-
+  "current_step": "SMC_V5_COMPLETED",
   "completed": {
     "scanner": true,
     "market_quality": true,
@@ -10,21 +10,33 @@
     "trend_engine": true,
     "setup_engine": true,
     "atlas_score_v2": true,
-    "smc_v3": true,
     "parallel_api": true,
-    "reports": true
+    "reports": true,
+    "smc_v3": true,
+    "smc_v4": true,
+    "smc_v5": true,
+    "smc_external_structure": true,
+    "smc_internal_structure": true,
+    "order_blocks": true,
+    "breaker_blocks": true,
+    "mitigation": true,
+    "supply_demand": true,
+    "premium_discount": true,
+    "equal_high_low": true,
+    "liquidity_pools": true,
+    "liquidity_sweep": true,
+    "fair_value_gap": true,
+    "inverse_fair_value_gap": true,
+    "balanced_price_range": true,
+    "displacement": true,
+    "smc_score_calibration": true
   },
-
-  "current_step": "SMC_V4",
-
   "next_modules": [
-    "CHOCH",
-    "Order Block",
-    "Breaker Block",
-    "Mitigation Block",
-    "Supply Demand",
-    "Premium Discount",
-    "Equal High Low",
-    "Liquidity Pool"
+    "SMC_V6_MULTI_TIMEFRAME",
+    "Atlas Score V3",
+    "Backtest Engine",
+    "Risk Engine",
+    "Trade Journal",
+    "Performance Analytics"
   ]
 }
