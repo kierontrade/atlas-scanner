@@ -1,6 +1,7 @@
 import asyncio
 
 from api.bingx_client import create_async_client, async_public_get
+from scanner.bingx import sort_klines_ascending
 from scoring.market_metrics import (
     calculate_spread,
     calculate_order_book_depth,
@@ -53,7 +54,7 @@ async def fetch_symbol_metrics(client, symbol):
 
         spread_data = calculate_spread(order_book)
         depth_data = calculate_order_book_depth(order_book)
-        atr_data = calculate_atr(klines)
+        atr_data = calculate_atr(sort_klines_ascending(klines))
 
         funding_rate = funding_data.get("lastFundingRate") if funding_data else None
         spread_percent = spread_data.get("spread_percent") if spread_data else None

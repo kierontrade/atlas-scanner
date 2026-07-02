@@ -463,13 +463,85 @@ def enforce_min_stop_distance(trend_direction, entry, stop):
     return stop, False
 
 
-def build_entry_stop_target(trend_direction, recent_high, recent_low, smc):
+def get_sequence_entry(trend_direction, sequence, current_price):
+    """
+    Sequence onaylıysa (CONFIRMED / ENTRY_ZONE_ACTIVE) entry, sweep
+    hareketinin ürettiği zone'dan alınır — fiyata yakın, sebep-sonuç
+    ilişkili gerçek SMC girişi. Stop, sweep ekstremi/zone dışına konur.
+    """
+    if not sequence or not current_price:
+        return None
+
+    if sequence.get("sequence_state") not in ("CONFIRMED", "ENTRY_ZONE_ACTIVE"):
+        return None
+
+    zone = sequence.get("sequence_zone")
+
+    if not zone:
+        return None
+
+    entry = zone["mid"]
+    zone_height = zone["high"] - zone["low"]
+
+    sweep_event = sequence.get("sweep_event") or {}
+    sweep_extreme = to_float(sweep_event.get("extreme"))
+
+    # Sweep ekstremi ancak zone'a yakınsa (1.5 zone boyu içinde) stop olarak
+    # kullanılır; günler önceki uzak bir sweep dibi stop'u anlamsız büyütür.
+    max_extreme_distance = zone_height * 1.5
+
+    if trend_direction == "BULLISH":
+        # Entry fiyatın üzerindeyse long limit anlamsız (fiyat zone'u aşağı delmiş)
+        if entry > current_price * 1.002:
+            return None
+
+        stop_base = zone["low"]
+
+        if (
+            sweep_extreme
+            and sweep_extreme < stop_base
+            and stop_base - sweep_extreme <= max_extreme_distance
+        ):
+            stop_base = sweep_extreme
+
+        stop = stop_base - calculate_buffer(stop_base)
+
+    elif trend_direction == "BEARISH":
+        if entry < current_price * 0.998:
+            return None
+
+        stop_base = zone["high"]
+
+        if (
+            sweep_extreme
+            and sweep_extreme > stop_base
+            and sweep_extreme - stop_base <= max_extreme_distance
+        ):
+            stop_base = sweep_extreme
+
+        stop = stop_base + calculate_buffer(stop_base)
+
+    else:
+        return None
+
+    return {"entry": entry, "stop": stop}
+
+
+def build_entry_stop_target(trend_direction, recent_high, recent_low, smc, sequence=None, current_price=None):
     range_size = recent_high - recent_low
 
     if range_size <= 0:
         return None
 
-    if trend_direction == "BULLISH":
+    entry_basis = "RANGE"
+    sequence_entry = get_sequence_entry(trend_direction, sequence, current_price)
+
+    if sequence_entry:
+        entry = sequence_entry["entry"]
+        stop = sequence_entry["stop"]
+        entry_basis = "SEQUENCE_ZONE"
+
+    elif trend_direction == "BULLISH":
         entry = recent_low + (range_size * LONG_ENTRY_RANGE_RATIO)
 
         demand_zone = smc.get("demand_zone") if smc else None
@@ -525,6 +597,7 @@ def build_entry_stop_target(trend_direction, recent_high, recent_low, smc):
         "rr_quality": classify_rr(rr),
         "stop_distance_percent": stop_distance_percent(entry, stop),
         "stop_adjusted": stop_adjusted,
+        "entry_basis": entry_basis,
         "target_source": target["source"],
         "target_type": target["type"],
         "target_candidates": target_levels,
@@ -1036,6 +1109,8 @@ def calculate_setup_score(symbol, trend_direction, structure="RANGE", smc=None):
         recent_high=recent_high,
         recent_low=recent_low,
         smc=smc,
+        sequence=sequence,
+        current_price=current_price,
     )
 
     if not setup_prices:
@@ -1054,10 +1129,12 @@ def calculate_setup_score(symbol, trend_direction, structure="RANGE", smc=None):
     rr = setup_prices["rr"]
     rr_quality = setup_prices["rr_quality"]
 
+    entry_basis = setup_prices.get("entry_basis", "RANGE")
+
     if trend_direction == "BULLISH":
-        setup_type = "LONG_LIMIT_ZONE"
+        setup_type = "LONG_SEQUENCE_ZONE" if entry_basis == "SEQUENCE_ZONE" else "LONG_LIMIT_ZONE"
     elif trend_direction == "BEARISH":
-        setup_type = "SHORT_LIMIT_ZONE"
+        setup_type = "SHORT_SEQUENCE_ZONE" if entry_basis == "SEQUENCE_ZONE" else "SHORT_LIMIT_ZONE"
     else:
         return build_wait_result(
             setup_type="WAIT",
@@ -1098,6 +1175,9 @@ def calculate_setup_score(symbol, trend_direction, structure="RANGE", smc=None):
         reasons.append(
             f"Trend nötr — SMC yönü ({trend_direction}) referans alındı (esnek mod)"
         )
+
+    if entry_basis == "SEQUENCE_ZONE":
+        reasons.append("Entry sequence zone'dan alındı (sweep hareketinin FVG/OB'si)")
 
     rr_score = score_rr(rr)
     score += rr_score
@@ -1204,6 +1284,7 @@ def calculate_setup_score(symbol, trend_direction, structure="RANGE", smc=None):
         "scan_mode": scan_mode,
         "trade_direction": trend_direction,
         "direction_fallback": direction_fallback,
+        "entry_basis": entry_basis,
         "entry_sequence_state": sequence.get("sequence_state"),
         "entry_sequence_score": sequence.get("sequence_score", 0),
         "entry_sequence_reasons": sequence.get("sequence_reasons", []),

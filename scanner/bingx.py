@@ -33,8 +33,29 @@ def get_order_book(symbol, limit=20):
     )
 
 
+def _candle_time(candle):
+    value = candle.get("time") or candle.get("openTime") or candle.get("timestamp")
+
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 0
+
+
+def sort_klines_ascending(klines):
+    """
+    BingX v3 kline endpoint'i mumları YENİDEN ESKİYE döndürür.
+    Tüm motorlar (trend, SMC, sequence, ATR) mumları eskiden yeniye
+    bekler; bu yüzden her kline verisi burada kronolojik sıralanır.
+    """
+    if not isinstance(klines, list) or len(klines) < 2:
+        return klines
+
+    return sorted(klines, key=_candle_time)
+
+
 def get_klines(symbol, interval="1h", limit=100):
-    return public_get(
+    klines = public_get(
         "/openApi/swap/v3/quote/klines",
         params={
             "symbol": symbol,
@@ -42,6 +63,8 @@ def get_klines(symbol, interval="1h", limit=100):
             "limit": limit,
         },
     )
+
+    return sort_klines_ascending(klines)
 
 
 def filter_usdt_contracts(contracts):
