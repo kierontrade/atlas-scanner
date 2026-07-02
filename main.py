@@ -1,7 +1,11 @@
+import argparse
 import asyncio
 import logging
+import time
 from pathlib import Path
 
+from config.settings import SCAN_INTERVAL_MINUTES
+from strategy.risk_engine import calculate_position_plan
 from scanner.bingx import (
     get_swap_contracts,
     get_24h_tickers,
@@ -229,6 +233,50 @@ def print_candidate(item):
     )
 
 
+def alert_sound():
+    try:
+        import winsound
+
+        winsound.Beep(880, 350)
+        winsound.Beep(1100, 350)
+    except Exception:
+        print("\a", end="")
+
+
+def print_trade_card(item):
+    """READY sinyalini BingX'e elle girilecek plan olarak yazdırır."""
+    tp_levels = item.get("plan_tp_levels") or []
+
+    print("")
+    print("┌" + "─" * 58)
+    print(f"│ 🟢 READY  {item['symbol']}  {item.get('plan_side', '-')}")
+    print(f"│ Atlas Score : {item.get('atlas_score')}  |  RR: {item.get('rr')}")
+    print("│")
+    print(f"│ Entry       : {item.get('entry')}")
+    print(f"│ Stop Loss   : {item.get('stop')}")
+
+    for index, level in enumerate(tp_levels, start=1):
+        print(f"│ TP{index}         : {level['price']}  ({level['source']})")
+
+    print("│")
+    print(f"│ Miktar      : {item.get('plan_quantity')} coin")
+    print(f"│ Notional    : {item.get('plan_notional_usdt')} USDT")
+    print(f"│ Kaldıraç    : {item.get('plan_leverage')}x")
+    print(f"│ Marjin      : {item.get('plan_margin_usdt')} USDT")
+    print(
+        f"│ Risk        : {item.get('plan_risk_usdt')} USDT "
+        f"(%{item.get('plan_risk_percent')} — SL vurursa kayıp)"
+    )
+    print("│")
+    print(f"│ Zamanlama   : {item.get('timing_advice')}")
+    print(f"│ Sequence    : {item.get('entry_sequence_state')}")
+
+    for reason in (item.get("trigger_reasons") or [])[:4]:
+        print(f"│  ✓ {reason}")
+
+    print("└" + "─" * 58)
+
+
 def build_stats(contracts, usdt_contracts, matched_contracts, passed):
     return {
         "total_futures": len(contracts),
@@ -238,23 +286,16 @@ def build_stats(contracts, usdt_contracts, matched_contracts, passed):
     }
 
 
-def main():
-    logger = setup_logging()
+def run_scan(alerted_setups):
+    journal.init_db()
 
-    print("=" * 50)
-    print("ATLAS SCANNER V1")
-    print("Atlas Score V3 / SMC V5 / Entry Sequence V1")
-    print("=" * 50)
+    session_context = get_session_context()
+    print(
+        f"\nSession: {session_context['session_name']} "
+        f"(UTC {session_context['utc_hour']}:00) — {session_context['session_reason']}"
+    )
 
     try:
-        journal.init_db()
-
-        session_context = get_session_context()
-        print(
-            f"\nSession: {session_context['session_name']} "
-            f"(UTC {session_context['utc_hour']}:00) — {session_context['session_reason']}"
-        )
-
         contracts = get_swap_contracts()
         tickers = get_24h_tickers()
         ticker_map = get_ticker_map(tickers)
@@ -379,6 +420,12 @@ def main():
             if item.get("setup_status") == "WAIT"
         ]
 
+        for item in ready:
+            plan = calculate_position_plan(item)
+
+            if plan:
+                item.update(plan)
+
         save_json(passed, "atlas_candidates.json")
         save_json(ready, "atlas_ready.json")
         save_json(watch, "atlas_watch.json")
@@ -445,11 +492,19 @@ def main():
         print(f"WAIT: {len(wait)}")
 
         print("\n🟢 READY adayları:")
+        new_ready = False
+
         for item in ready[:10]:
-            print_candidate(item)
-            advice = item.get("timing_advice")
-            if advice:
-                print(f"    ⏱  Zamanlama: {advice}")
+            print_trade_card(item)
+
+            alert_key = f"{item['symbol']}:{item.get('entry')}"
+
+            if alert_key not in alerted_setups:
+                alerted_setups.add(alert_key)
+                new_ready = True
+
+        if new_ready:
+            alert_sound()
 
         print("\n🟡 WATCH adayları:")
         for item in watch[:10]:
@@ -460,8 +515,49 @@ def main():
             print_candidate(item)
 
     except Exception:
-        logger.exception("Tarama sırasında hata oluştu")
+        logging.getLogger("atlas").exception("Tarama sırasında hata oluştu")
         print("\n❌ Hata oluştu — detay için logs/atlas.log dosyasına bak")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="ATLAS SMC Scanner")
+    parser.add_argument(
+        "--loop",
+        action="store_true",
+        help=f"Sürekli mod: {SCAN_INTERVAL_MINUTES} dakikada bir tarar",
+    )
+    args = parser.parse_args()
+
+    setup_logging()
+
+    print("=" * 50)
+    print("ATLAS SCANNER V1")
+    print("Atlas Score V3 / SMC V5 / Entry Sequence V1")
+    print("=" * 50)
+
+    alerted_setups = set()
+
+    if not args.loop:
+        run_scan(alerted_setups)
+        return
+
+    print(f"\n♻ Sürekli mod aktif — her {SCAN_INTERVAL_MINUTES} dakikada bir tarama")
+    print("Durdurmak için Ctrl+C\n")
+
+    while True:
+        run_scan(alerted_setups)
+
+        next_scan = time.strftime(
+            "%H:%M",
+            time.localtime(time.time() + SCAN_INTERVAL_MINUTES * 60),
+        )
+        print(f"\n⏳ Sonraki tarama: {next_scan}")
+
+        try:
+            time.sleep(SCAN_INTERVAL_MINUTES * 60)
+        except KeyboardInterrupt:
+            print("\nATLAS durduruldu.")
+            break
 
 
 if __name__ == "__main__":

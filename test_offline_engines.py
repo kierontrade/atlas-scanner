@@ -10,6 +10,7 @@ from pathlib import Path
 from scoring.derivatives_engine import calculate_derivatives_score
 from storage import journal
 from strategy.entry_sequence import analyze_entry_sequence
+from strategy.risk_engine import calculate_position_plan
 from strategy.session_engine import get_session_context
 from strategy.smc.cisd_engine import detect_cisd
 
@@ -184,6 +185,42 @@ def test_journal():
     print("✓ journal: kayıt, OI geçmişi, outcome etiketleme, istatistik doğru")
 
 
+def test_risk_engine():
+    item = {
+        "trend_direction": "BULLISH",
+        "entry": 100.0,
+        "stop": 98.0,
+        "target": 106.0,
+        "target_source": "RECENT_HIGH",
+        "target_candidates": [
+            {"price": 103.0, "source": "SUPPLY_ZONE_LOW"},
+            {"price": 106.0, "source": "RECENT_HIGH"},
+            {"price": 109.0, "source": "BUY_SIDE_LIQUIDITY"},
+            {"price": 97.0, "source": "IGNORED_BELOW_ENTRY"},
+        ],
+    }
+
+    plan = calculate_position_plan(item, balance=1000, risk_percent=1, max_leverage=10)
+
+    # risk 10 USDT / stop mesafesi 2 -> 5 coin -> 500 USDT notional -> kaldıraçsız
+    assert plan["plan_side"] == "LONG"
+    assert plan["plan_risk_usdt"] == 10.0
+    assert plan["plan_quantity"] == 5.0
+    assert plan["plan_notional_usdt"] == 500.0
+    assert plan["plan_leverage"] == 1
+    assert [level["price"] for level in plan["plan_tp_levels"]] == [103.0, 106.0, 109.0]
+
+    # dar stop -> notional bakiyeyi aşar -> kaldıraç önerilir
+    tight = dict(item, stop=99.8)
+    plan_tight = calculate_position_plan(tight, balance=1000, risk_percent=1, max_leverage=10)
+
+    assert plan_tight["plan_notional_usdt"] == 5000.0
+    assert plan_tight["plan_leverage"] == 5
+    assert plan_tight["plan_margin_usdt"] == 1000.0
+
+    print("✓ risk_engine: pozisyon boyutu, kaldıraç ve TP kademeleri doğru")
+
+
 if __name__ == "__main__":
     test_entry_sequence_full_chain()
     test_entry_sequence_idle_without_sweep()
@@ -191,4 +228,5 @@ if __name__ == "__main__":
     test_session_engine()
     test_derivatives_engine()
     test_journal()
+    test_risk_engine()
     print("\nTüm offline testler geçti ✓")

@@ -35,6 +35,12 @@ RISK_PER_TRADE = 1
 
 MIN_RR = 2
 
+# Demo/gerçek hesap bakiyesi (USDT) — pozisyon boyutu bundan hesaplanır
+ACCOUNT_BALANCE_USDT = 1000
+
+# Önerilecek maksimum kaldıraç
+MAX_LEVERAGE = 10
+
 # ----------------------------
 # Timeframes
 # ----------------------------
