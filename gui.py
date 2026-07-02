@@ -80,7 +80,11 @@ def format_candidate_block(item):
             f" Seq: {str(item.get('entry_sequence_state', '-')):<18}"
             f" Trigger: {item.get('trigger_status', '-')}"
         ),
-        f"    Şu anki fiyat : {item.get('current_price', '-')}",
+        (
+            f"    Şu anki fiyat : {item.get('current_price', '-')}"
+            f"    [veri: {item.get('data_candle_time', '-')} mumu"
+            f" ({item.get('data_interval', '-')})]"
+        ),
         (
             f"    Hedef Entry   : {item.get('entry', '-')}"
             f"    (uzaklık %{item.get('entry_distance_percent', '-')})"

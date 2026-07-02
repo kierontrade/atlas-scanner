@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from scanner.bingx import get_klines
 from strategy.entry_sequence import analyze_entry_sequence, empty_sequence
 
@@ -116,6 +118,13 @@ def get_recent_high_low(klines, lookback=RECENT_RANGE_LOOKBACK):
         "recent_low": min(lows),
         "last_close": closes[-1],
     }
+
+
+def format_candle_time(candle_time):
+    try:
+        return datetime.fromtimestamp(int(candle_time) / 1000).strftime("%d.%m %H:%M")
+    except (TypeError, ValueError, OSError):
+        return None
 
 
 def calculate_cvd_proxy(normalized_klines, lookback=20):
@@ -990,10 +999,13 @@ def build_wait_result(
     sequence=None,
     cvd_proxy=None,
     price_change_percent_20=None,
+    data_candle_time=None,
 ):
     sequence = sequence or empty_sequence()
 
     return {
+        "data_candle_time": data_candle_time,
+        "data_interval": DEFAULT_INTERVAL,
         "entry_sequence_state": sequence.get("sequence_state"),
         "entry_sequence_score": sequence.get("sequence_score", 0),
         "entry_sequence_reasons": sequence.get("sequence_reasons", []),
@@ -1104,6 +1116,8 @@ def calculate_setup_score(symbol, trend_direction, structure="RANGE", smc=None):
     cvd_proxy = calculate_cvd_proxy(normalized)
     price_change_percent_20 = calculate_price_change_percent(normalized)
 
+    data_candle_time = format_candle_time(normalized[-1].get("time")) if normalized else None
+
     setup_prices = build_entry_stop_target(
         trend_direction=trend_direction,
         recent_high=recent_high,
@@ -1121,6 +1135,7 @@ def calculate_setup_score(symbol, trend_direction, structure="RANGE", smc=None):
             sequence=sequence,
             cvd_proxy=cvd_proxy,
             price_change_percent_20=price_change_percent_20,
+            data_candle_time=data_candle_time,
         )
 
     entry = setup_prices["entry"]
@@ -1143,6 +1158,7 @@ def calculate_setup_score(symbol, trend_direction, structure="RANGE", smc=None):
             sequence=sequence,
             cvd_proxy=cvd_proxy,
             price_change_percent_20=price_change_percent_20,
+            data_candle_time=data_candle_time,
         )
 
     entry_distance = distance_percent(current_price, entry)
@@ -1166,6 +1182,7 @@ def calculate_setup_score(symbol, trend_direction, structure="RANGE", smc=None):
             sequence=sequence,
             cvd_proxy=cvd_proxy,
             price_change_percent_20=price_change_percent_20,
+            data_candle_time=data_candle_time,
         )
 
     score = 0
@@ -1285,6 +1302,8 @@ def calculate_setup_score(symbol, trend_direction, structure="RANGE", smc=None):
         "trade_direction": trend_direction,
         "direction_fallback": direction_fallback,
         "entry_basis": entry_basis,
+        "data_candle_time": data_candle_time,
+        "data_interval": DEFAULT_INTERVAL,
         "entry_sequence_state": sequence.get("sequence_state"),
         "entry_sequence_score": sequence.get("sequence_score", 0),
         "entry_sequence_reasons": sequence.get("sequence_reasons", []),

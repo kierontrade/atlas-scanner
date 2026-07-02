@@ -251,8 +251,16 @@ def format_trade_card(item):
     lines.append("┌" + "─" * 58)
     lines.append(f"│ 🟢 READY  {item['symbol']}  {item.get('plan_side', '-')}")
     lines.append(f"│ Atlas Score : {item.get('atlas_score')}  |  RR: {item.get('rr')}")
+    lines.append(
+        f"│ Veri        : {item.get('data_candle_time', '-')} mumu"
+        f" ({item.get('data_interval', '-')})"
+    )
     lines.append("│")
-    lines.append(f"│ Entry       : {item.get('entry')}")
+    lines.append(f"│ Anlık Fiyat : {item.get('current_price')}")
+    lines.append(
+        f"│ Entry       : {item.get('entry')}"
+        f"   (uzaklık %{item.get('entry_distance_percent', '-')})"
+    )
     lines.append(f"│ Stop Loss   : {item.get('stop')}")
 
     for index, level in enumerate(tp_levels, start=1):
