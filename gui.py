@@ -64,7 +64,7 @@ def setup_gui_logging():
 
 def format_candidate_block(item):
     """WATCH/WAIT adayı için detaylı görünüm."""
-    direction = item.get("trend_direction")
+    direction = item.get("trade_direction") or item.get("trend_direction")
     side = "LONG" if direction == "BULLISH" else "SHORT" if direction == "BEARISH" else "-"
 
     tp_levels = item.get("plan_tp_levels") or []

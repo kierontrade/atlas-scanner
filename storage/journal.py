@@ -201,7 +201,7 @@ def record_scan(passed_items, failed_count, session_name, counts):
                     now,
                     item.get("symbol"),
                     item.get("setup_status"),
-                    item.get("trend_direction"),
+                    item.get("trade_direction") or item.get("trend_direction"),
                     _to_float(item.get("atlas_score")),
                     _to_float(item.get("entry")),
                     _to_float(item.get("stop")),

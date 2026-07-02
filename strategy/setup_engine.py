@@ -12,23 +12,26 @@ TRIGGER_READY_DISTANCE_PERCENT = 0.30
 TRIGGER_ARMED_DISTANCE_PERCENT = 0.80
 ENTRY_MISSED_BUFFER_PERCENT = 0.20
 
-# Tarama modları:
-#   STRICT   -> sniper disiplini: dar mesafe, yüksek onay, sweep şart.
-#   FLEXIBLE -> veri toplama modu: daha geniş mesafe, düşük onay eşiği,
-#               sweep şartı yok. Amaç günde ~10 sinyalle istatistik
-#               biriktirmek (demo). Aktif mod data/user_config.json'dan okunur.
+# Tarama modları — entry mesafesi HER İKİ modda da aynıdır (sniper mesafe);
+# esneyen şey skorlama/setup koşullarıdır:
+#   STRICT   -> onay eşiği 55, sweep şart, trend nötrse setup yok.
+#   FLEXIBLE -> onay eşiği 40, sweep şart değil (puan vermeye devam eder),
+#               trend nötrse SMC yönü devralır. Amaç günde ~10 sinyalle
+#               istatistik biriktirmek (demo). Mod data/user_config.json'dan okunur.
 SCAN_MODES = {
     "STRICT": {
         "trigger_ready_distance": TRIGGER_READY_DISTANCE_PERCENT,
         "trigger_armed_distance": TRIGGER_ARMED_DISTANCE_PERCENT,
         "confirmation_min": 55,
         "require_sweep_for_ready": True,
+        "use_smc_direction_fallback": False,
     },
     "FLEXIBLE": {
-        "trigger_ready_distance": 1.00,
-        "trigger_armed_distance": 2.00,
-        "confirmation_min": 35,
+        "trigger_ready_distance": TRIGGER_READY_DISTANCE_PERCENT,
+        "trigger_armed_distance": TRIGGER_ARMED_DISTANCE_PERCENT,
+        "confirmation_min": 40,
         "require_sweep_for_ready": False,
+        "use_smc_direction_fallback": True,
     },
 }
 
@@ -1003,6 +1006,19 @@ def apply_conflict_severity(score, setup_status, conflict, reasons):
 
 
 def calculate_setup_score(symbol, trend_direction, structure="RANGE", smc=None):
+    scan_mode, mode_params = get_scan_mode_params()
+
+    # Esnek mod: trend nötrse ama SMC yapısı net yön gösteriyorsa
+    # SMC yönü devralınır — setup üretimi trend kararsızlığına takılmaz.
+    direction_fallback = False
+
+    if mode_params["use_smc_direction_fallback"] and trend_direction == "NEUTRAL":
+        smc_direction = get_smc_direction(smc, structure)
+
+        if smc_direction in ("BULLISH", "BEARISH"):
+            trend_direction = smc_direction
+            direction_fallback = True
+
     klines = get_klines(symbol, interval=DEFAULT_INTERVAL, limit=DEFAULT_LIMIT)
     normalized = normalize_klines(klines)
     levels = get_recent_high_low(klines)
@@ -1078,6 +1094,11 @@ def calculate_setup_score(symbol, trend_direction, structure="RANGE", smc=None):
     score = 0
     reasons = []
 
+    if direction_fallback:
+        reasons.append(
+            f"Trend nötr — SMC yönü ({trend_direction}) referans alındı (esnek mod)"
+        )
+
     rr_score = score_rr(rr)
     score += rr_score
     reasons.append(f"Gerçek RR hesaplandı: {round(rr, 2)} ({rr_quality})")
@@ -1135,8 +1156,6 @@ def calculate_setup_score(symbol, trend_direction, structure="RANGE", smc=None):
         reasons=reasons,
     )
 
-    scan_mode, mode_params = get_scan_mode_params()
-
     trigger = calculate_trigger(
         trend_direction=trend_direction,
         setup_status=setup_status,
@@ -1183,6 +1202,8 @@ def calculate_setup_score(symbol, trend_direction, structure="RANGE", smc=None):
         "trigger_score": trigger["trigger_score"],
         "trigger_reasons": trigger["trigger_reasons"],
         "scan_mode": scan_mode,
+        "trade_direction": trend_direction,
+        "direction_fallback": direction_fallback,
         "entry_sequence_state": sequence.get("sequence_state"),
         "entry_sequence_score": sequence.get("sequence_score", 0),
         "entry_sequence_reasons": sequence.get("sequence_reasons", []),

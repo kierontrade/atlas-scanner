@@ -89,7 +89,7 @@ def calculate_position_plan(
 
     entry = to_float(item.get("entry"))
     stop = to_float(item.get("stop"))
-    direction = item.get("trend_direction")
+    direction = item.get("trade_direction") or item.get("trend_direction")
 
     if not entry or not stop or direction not in ("BULLISH", "BEARISH"):
         return None
