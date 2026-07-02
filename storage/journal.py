@@ -137,6 +137,7 @@ def get_previous_metrics(symbol):
 
 def _build_flags(item):
     return {
+        "scan_mode": item.get("scan_mode"),
         "sequence_state": item.get("entry_sequence_state"),
         "has_cisd": item.get("has_cisd"),
         "has_mss": item.get("has_mss"),

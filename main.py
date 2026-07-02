@@ -427,7 +427,9 @@ def run_scan(alerted_setups):
             if item.get("setup_status") == "WAIT"
         ]
 
-        for item in ready:
+        # TP kademeleri ve pozisyon planı tüm kategoriler için hesaplanır
+        # ki arayüzde WATCH/WAIT adayları da detaylı görünsün.
+        for item in ready + watch + wait:
             plan = calculate_position_plan(item)
 
             if plan:

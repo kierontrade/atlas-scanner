@@ -16,7 +16,6 @@ Emir GÖNDERMEZ. Sadece plan üretir; işlemi kullanıcı (demo/gerçek) girer.
 """
 
 from config.settings import (
-    ACCOUNT_BALANCE_USDT,
     MAX_LEVERAGE,
     RISK_PER_TRADE,
 )
@@ -70,16 +69,24 @@ def build_tp_levels(direction, entry, target_candidates, max_levels=3):
 
 def calculate_position_plan(
     item,
-    balance=ACCOUNT_BALANCE_USDT,
+    balance=None,
     risk_percent=RISK_PER_TRADE,
     max_leverage=MAX_LEVERAGE,
 ):
     """
-    item: READY setup item'ı (entry, stop, target, trend_direction,
+    item: setup item'ı (entry, stop, target, trend_direction,
     target_candidates içermeli).
+
+    balance None ise data/user_config.json'daki güncel bakiye kullanılır
+    (arayüzden anlık değiştirilebilir).
 
     Dönüş: item'a merge edilecek plan alanları veya geçersizse None.
     """
+    if balance is None:
+        from config.user_config import get_balance
+
+        balance = get_balance()
+
     entry = to_float(item.get("entry"))
     stop = to_float(item.get("stop"))
     direction = item.get("trend_direction")

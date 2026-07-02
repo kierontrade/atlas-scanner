@@ -30,10 +30,10 @@ if sys.stderr is None:
 import customtkinter as ctk
 
 from config.settings import (
-    ACCOUNT_BALANCE_USDT,
     RISK_PER_TRADE,
     SCAN_INTERVAL_MINUTES,
 )
+from config.user_config import get_balance, get_scan_mode, save_user_config
 from main import alert_sound, format_trade_card, run_scan
 
 
@@ -62,16 +62,39 @@ def setup_gui_logging():
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 
-def format_candidate_line(item):
-    return (
-        f"{item.get('symbol', '-'):<14}"
-        f" Atlas: {str(item.get('atlas_score', '-')):<7}"
-        f" {item.get('trend_direction', '-'):<8}"
-        f" Seq: {str(item.get('entry_sequence_state', '-')):<18}"
-        f" Trigger: {str(item.get('trigger_status', '-')):<15}"
-        f" RR: {str(item.get('rr', '-')):<6}"
-        f" Uzaklık: {item.get('entry_distance_percent', '-')}%"
-    )
+def format_candidate_block(item):
+    """WATCH/WAIT adayı için detaylı görünüm."""
+    direction = item.get("trend_direction")
+    side = "LONG" if direction == "BULLISH" else "SHORT" if direction == "BEARISH" else "-"
+
+    tp_levels = item.get("plan_tp_levels") or []
+    tp_parts = [str(level["price"]) for level in tp_levels]
+
+    while len(tp_parts) < 3:
+        tp_parts.append("-")
+
+    lines = [
+        (
+            f"{item.get('symbol', '-'):<14} {side:<6}"
+            f" Atlas: {str(item.get('atlas_score', '-')):<7}"
+            f" Seq: {str(item.get('entry_sequence_state', '-')):<18}"
+            f" Trigger: {item.get('trigger_status', '-')}"
+        ),
+        f"    Şu anki fiyat : {item.get('current_price', '-')}",
+        (
+            f"    Hedef Entry   : {item.get('entry', '-')}"
+            f"    (uzaklık %{item.get('entry_distance_percent', '-')})"
+        ),
+        f"    Stop Loss     : {item.get('stop', '-')}",
+        f"    TP1 / TP2 / TP3: {tp_parts[0]}  /  {tp_parts[1]}  /  {tp_parts[2]}",
+        (
+            f"    RR: {item.get('rr', '-')}"
+            f"  |  Zamanlama: {item.get('timing_advice', '-')}"
+        ),
+        "",
+    ]
+
+    return "\n".join(lines)
 
 
 class AtlasApp(ctk.CTk):
@@ -159,13 +182,53 @@ class AtlasApp(ctk.CTk):
         )
         self.countdown_label.pack(side="right", padx=15)
 
-        risk_info = ctk.CTkLabel(
-            status_bar,
-            text=f"Bakiye: {ACCOUNT_BALANCE_USDT} USDT | Risk: %{RISK_PER_TRADE}",
+        # --- Ayar çubuğu: bakiye + tarama modu ---
+        settings_bar = ctk.CTkFrame(self, corner_radius=0, height=42)
+        settings_bar.pack(fill="x")
+
+        balance_label = ctk.CTkLabel(
+            settings_bar,
+            text=f"Bakiye (USDT) — risk %{RISK_PER_TRADE}:",
             font=ctk.CTkFont(size=13),
-            text_color="#8a8a8a",
         )
-        risk_info.pack(side="right", padx=15)
+        balance_label.pack(side="left", padx=(15, 5), pady=8)
+
+        self.balance_entry = ctk.CTkEntry(settings_bar, width=110)
+        self.balance_entry.insert(0, f"{get_balance():g}")
+        self.balance_entry.pack(side="left", padx=5, pady=8)
+
+        self.balance_save_button = ctk.CTkButton(
+            settings_bar,
+            text="💾 Kaydet",
+            width=90,
+            command=self.save_balance,
+        )
+        self.balance_save_button.pack(side="left", padx=5, pady=8)
+
+        self.balance_status = ctk.CTkLabel(
+            settings_bar,
+            text="",
+            font=ctk.CTkFont(size=12),
+            text_color="#2ecc71",
+        )
+        self.balance_status.pack(side="left", padx=10)
+
+        mode_label = ctk.CTkLabel(
+            settings_bar,
+            text="Tarama modu:",
+            font=ctk.CTkFont(size=13),
+        )
+        mode_label.pack(side="left", padx=(30, 5))
+
+        self.mode_selector = ctk.CTkSegmentedButton(
+            settings_bar,
+            values=["Esnek (çok sinyal)", "Sıkı (sniper)"],
+            command=self.change_mode,
+        )
+        self.mode_selector.set(
+            "Sıkı (sniper)" if get_scan_mode() == "STRICT" else "Esnek (çok sinyal)"
+        )
+        self.mode_selector.pack(side="left", padx=5, pady=8)
 
         self.tabs = ctk.CTkTabview(self)
         self.tabs.pack(fill="both", expand=True, padx=10, pady=(5, 10))
@@ -193,6 +256,38 @@ class AtlasApp(ctk.CTk):
         )
         box.pack(fill="both", expand=True, padx=5, pady=5)
         return box
+
+    # ------------------------------------------------------------------
+    # Settings
+    # ------------------------------------------------------------------
+
+    def save_balance(self):
+        raw = self.balance_entry.get().strip().replace(",", ".")
+
+        try:
+            balance = float(raw)
+
+            if balance <= 0:
+                raise ValueError
+        except ValueError:
+            self.balance_status.configure(
+                text="Geçersiz değer!", text_color="#e74c3c"
+            )
+            return
+
+        save_user_config(balance_usdt=balance)
+        self.balance_status.configure(
+            text=f"✓ {balance:g} USDT kaydedildi — sonraki taramadan itibaren geçerli",
+            text_color="#2ecc71",
+        )
+
+    def change_mode(self, selection):
+        mode = "STRICT" if "Sıkı" in selection else "FLEXIBLE"
+        save_user_config(scan_mode=mode)
+        self.balance_status.configure(
+            text=f"✓ Mod: {'Sıkı' if mode == 'STRICT' else 'Esnek'} — sonraki taramadan itibaren geçerli",
+            text_color="#2ecc71",
+        )
 
     # ------------------------------------------------------------------
     # Scan control
@@ -314,13 +409,13 @@ class AtlasApp(ctk.CTk):
         self.watch_box.delete("1.0", "end")
         self.watch_box.insert(
             "1.0",
-            "\n".join(format_candidate_line(item) for item in watch) or "WATCH adayı yok.",
+            "\n".join(format_candidate_block(item) for item in watch) or "WATCH adayı yok.",
         )
 
         self.wait_box.delete("1.0", "end")
         self.wait_box.insert(
             "1.0",
-            "\n".join(format_candidate_line(item) for item in wait) or "WAIT adayı yok.",
+            "\n".join(format_candidate_block(item) for item in wait) or "WAIT adayı yok.",
         )
 
         stats = results.get("stats") or {}

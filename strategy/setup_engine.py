@@ -12,6 +12,33 @@ TRIGGER_READY_DISTANCE_PERCENT = 0.30
 TRIGGER_ARMED_DISTANCE_PERCENT = 0.80
 ENTRY_MISSED_BUFFER_PERCENT = 0.20
 
+# Tarama modları:
+#   STRICT   -> sniper disiplini: dar mesafe, yüksek onay, sweep şart.
+#   FLEXIBLE -> veri toplama modu: daha geniş mesafe, düşük onay eşiği,
+#               sweep şartı yok. Amaç günde ~10 sinyalle istatistik
+#               biriktirmek (demo). Aktif mod data/user_config.json'dan okunur.
+SCAN_MODES = {
+    "STRICT": {
+        "trigger_ready_distance": TRIGGER_READY_DISTANCE_PERCENT,
+        "trigger_armed_distance": TRIGGER_ARMED_DISTANCE_PERCENT,
+        "confirmation_min": 55,
+        "require_sweep_for_ready": True,
+    },
+    "FLEXIBLE": {
+        "trigger_ready_distance": 1.00,
+        "trigger_armed_distance": 2.00,
+        "confirmation_min": 35,
+        "require_sweep_for_ready": False,
+    },
+}
+
+
+def get_scan_mode_params():
+    from config.user_config import get_scan_mode
+
+    mode = get_scan_mode()
+    return mode, SCAN_MODES.get(mode, SCAN_MODES["STRICT"])
+
 DEFAULT_INTERVAL = "1h"
 DEFAULT_LIMIT = 100
 RECENT_RANGE_LOOKBACK = 50
@@ -768,10 +795,19 @@ def calculate_trigger(
     conflict,
     smc,
     sequence=None,
+    mode_params=None,
 ):
     reasons = []
     trigger_score = 0
     trigger_status = "NO_TRIGGER"
+
+    if mode_params is None:
+        _, mode_params = get_scan_mode_params()
+
+    ready_distance = mode_params["trigger_ready_distance"]
+    armed_distance = mode_params["trigger_armed_distance"]
+    confirmation_min = mode_params["confirmation_min"]
+    require_sweep = mode_params["require_sweep_for_ready"]
 
     if setup_status == "WAIT":
         return {
@@ -800,20 +836,20 @@ def calculate_trigger(
 
     proximity_bonus = 0
 
-    if entry_distance <= TRIGGER_READY_DISTANCE_PERCENT:
+    if entry_distance <= ready_distance:
         proximity_bonus = 20
-    elif entry_distance <= TRIGGER_ARMED_DISTANCE_PERCENT:
+    elif entry_distance <= armed_distance:
         proximity_bonus = 10
 
     final_confirmation_score = confirmation_score + proximity_bonus
 
-    # Sniper disiplini: likidite alınmadan (sweep yokken) TRIGGER_READY verilmez.
-    sequence_allows_ready = sequence_state not in ("IDLE",)
+    # Sniper disiplini (STRICT): likidite alınmadan TRIGGER_READY verilmez.
+    sequence_blocks_ready = require_sweep and sequence_state in ("IDLE",)
 
     if (
-        entry_distance <= TRIGGER_READY_DISTANCE_PERCENT
-        and final_confirmation_score >= 55
-        and not sequence_allows_ready
+        entry_distance <= ready_distance
+        and final_confirmation_score >= confirmation_min
+        and sequence_blocks_ready
     ):
         trigger_status = "TRIGGER_ARMED"
         trigger_score = min(75, 40 + int(final_confirmation_score / 2))
@@ -822,13 +858,13 @@ def calculate_trigger(
         )
         reasons.extend(confirmation_reasons)
 
-    elif entry_distance <= TRIGGER_READY_DISTANCE_PERCENT and final_confirmation_score >= 55:
+    elif entry_distance <= ready_distance and final_confirmation_score >= confirmation_min:
         trigger_status = "TRIGGER_READY"
         trigger_score = min(100, 80 + int(final_confirmation_score / 5))
         reasons.append("Fiyat entry bölgesinde ve yeterli confirmation var")
         reasons.extend(confirmation_reasons)
 
-    elif entry_distance <= TRIGGER_ARMED_DISTANCE_PERCENT:
+    elif entry_distance <= armed_distance:
         trigger_status = "TRIGGER_ARMED"
         trigger_score = min(75, 40 + int(final_confirmation_score / 2))
         reasons.append("Fiyat entry bölgesine çok yakın")
@@ -1099,6 +1135,8 @@ def calculate_setup_score(symbol, trend_direction, structure="RANGE", smc=None):
         reasons=reasons,
     )
 
+    scan_mode, mode_params = get_scan_mode_params()
+
     trigger = calculate_trigger(
         trend_direction=trend_direction,
         setup_status=setup_status,
@@ -1106,6 +1144,7 @@ def calculate_setup_score(symbol, trend_direction, structure="RANGE", smc=None):
         conflict=conflict,
         smc=smc,
         sequence=sequence,
+        mode_params=mode_params,
     )
 
     setup_status = apply_trigger_to_status(
@@ -1143,6 +1182,7 @@ def calculate_setup_score(symbol, trend_direction, structure="RANGE", smc=None):
         "trigger_status": trigger["trigger_status"],
         "trigger_score": trigger["trigger_score"],
         "trigger_reasons": trigger["trigger_reasons"],
+        "scan_mode": scan_mode,
         "entry_sequence_state": sequence.get("sequence_state"),
         "entry_sequence_score": sequence.get("sequence_score", 0),
         "entry_sequence_reasons": sequence.get("sequence_reasons", []),
