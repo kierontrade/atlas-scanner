@@ -14,14 +14,31 @@ pip install -r requirements.txt
 
 ## Kullanım
 
+### Masaüstü arayüz (önerilen)
+
+```
+python gui.py
+```
+
+Koyu temalı dashboard: Tek Tarama / Sürekli Mod butonları, READY trade
+card'ları, WATCH/WAIT listeleri, journal istatistikleri, geri sayım ve
+yeni READY'de sesli uyarı.
+
+EXE olarak derlemek için (çıktı: `dist/ATLAS.exe`, çift tıklamayla çalışır):
+
+```
+build_exe.bat
+```
+
+### Komut satırı
+
 Tek tarama:
 
 ```
 python main.py
 ```
 
-Sürekli mod (demo test için önerilen — 15 dakikada bir tarar, yeni READY
-çıkınca sesli uyarı verir):
+Sürekli mod (15 dakikada bir tarar, yeni READY çıkınca sesli uyarı verir):
 
 ```
 python main.py --loop

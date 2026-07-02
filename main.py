@@ -243,38 +243,45 @@ def alert_sound():
         print("\a", end="")
 
 
-def print_trade_card(item):
-    """READY sinyalini BingX'e elle girilecek plan olarak yazdırır."""
+def format_trade_card(item):
+    """READY sinyalini BingX'e elle girilecek plan bloğuna çevirir."""
     tp_levels = item.get("plan_tp_levels") or []
 
-    print("")
-    print("┌" + "─" * 58)
-    print(f"│ 🟢 READY  {item['symbol']}  {item.get('plan_side', '-')}")
-    print(f"│ Atlas Score : {item.get('atlas_score')}  |  RR: {item.get('rr')}")
-    print("│")
-    print(f"│ Entry       : {item.get('entry')}")
-    print(f"│ Stop Loss   : {item.get('stop')}")
+    lines = []
+    lines.append("┌" + "─" * 58)
+    lines.append(f"│ 🟢 READY  {item['symbol']}  {item.get('plan_side', '-')}")
+    lines.append(f"│ Atlas Score : {item.get('atlas_score')}  |  RR: {item.get('rr')}")
+    lines.append("│")
+    lines.append(f"│ Entry       : {item.get('entry')}")
+    lines.append(f"│ Stop Loss   : {item.get('stop')}")
 
     for index, level in enumerate(tp_levels, start=1):
-        print(f"│ TP{index}         : {level['price']}  ({level['source']})")
+        lines.append(f"│ TP{index}         : {level['price']}  ({level['source']})")
 
-    print("│")
-    print(f"│ Miktar      : {item.get('plan_quantity')} coin")
-    print(f"│ Notional    : {item.get('plan_notional_usdt')} USDT")
-    print(f"│ Kaldıraç    : {item.get('plan_leverage')}x")
-    print(f"│ Marjin      : {item.get('plan_margin_usdt')} USDT")
-    print(
+    lines.append("│")
+    lines.append(f"│ Miktar      : {item.get('plan_quantity')} coin")
+    lines.append(f"│ Notional    : {item.get('plan_notional_usdt')} USDT")
+    lines.append(f"│ Kaldıraç    : {item.get('plan_leverage')}x")
+    lines.append(f"│ Marjin      : {item.get('plan_margin_usdt')} USDT")
+    lines.append(
         f"│ Risk        : {item.get('plan_risk_usdt')} USDT "
         f"(%{item.get('plan_risk_percent')} — SL vurursa kayıp)"
     )
-    print("│")
-    print(f"│ Zamanlama   : {item.get('timing_advice')}")
-    print(f"│ Sequence    : {item.get('entry_sequence_state')}")
+    lines.append("│")
+    lines.append(f"│ Zamanlama   : {item.get('timing_advice')}")
+    lines.append(f"│ Sequence    : {item.get('entry_sequence_state')}")
 
     for reason in (item.get("trigger_reasons") or [])[:4]:
-        print(f"│  ✓ {reason}")
+        lines.append(f"│  ✓ {reason}")
 
-    print("└" + "─" * 58)
+    lines.append("└" + "─" * 58)
+
+    return "\n".join(lines)
+
+
+def print_trade_card(item):
+    print("")
+    print(format_trade_card(item))
 
 
 def build_stats(contracts, usdt_contracts, matched_contracts, passed):
@@ -514,9 +521,21 @@ def run_scan(alerted_setups):
         for item in wait[:10]:
             print_candidate(item)
 
+        return {
+            "session": session_context,
+            "stats": stats,
+            "ready": ready,
+            "watch": watch,
+            "wait": wait,
+            "failed_count": len(failed),
+            "outcome_stats": outcome_stats,
+            "new_ready": new_ready,
+        }
+
     except Exception:
         logging.getLogger("atlas").exception("Tarama sırasında hata oluştu")
         print("\n❌ Hata oluştu — detay için logs/atlas.log dosyasına bak")
+        return None
 
 
 def main():
