@@ -27,6 +27,7 @@ def _fmt_zone(zone):
         f"{zone.get('type', '-')}"
         f" | Low: {_fmt_num(zone.get('low'))}"
         f" | High: {_fmt_num(zone.get('high'))}"
+        f" | Mid: {_fmt_num(zone.get('mid'))}"
     )
 
 
@@ -113,7 +114,40 @@ def _fmt_reasons(reasons):
     if not reasons:
         return [" -"]
 
-    return [f" - {reason}" for reason in reasons[:14]]
+    return [f" - {reason}" for reason in reasons[:18]]
+
+
+def _fmt_mtf_counts(counts):
+    if not counts:
+        return "-"
+
+    return (
+        f"BULLISH: {counts.get('BULLISH', 0)}"
+        f" | BEARISH: {counts.get('BEARISH', 0)}"
+        f" | NEUTRAL: {counts.get('NEUTRAL', 0)}"
+    )
+
+
+def _format_mtf_timeframes(timeframes):
+    lines = []
+
+    if not timeframes:
+        lines.append("  - No MTF data")
+        return lines
+
+    for item in timeframes:
+        lines.append(
+            "  - "
+            f"{item.get('timeframe', '-')}"
+            f" | Structure: {_safe(item.get('structure'))}"
+            f" | Direction: {_safe(item.get('direction'))}"
+            f" | Source: {_safe(item.get('structure_source'))}"
+            f" | External: {_safe(item.get('external_direction'))}"
+            f" | Internal: {_safe(item.get('internal_direction'))}"
+            f" | Close: {_fmt_num(item.get('last_close'))}"
+        )
+
+    return lines
 
 
 def write_atlas_report(
@@ -139,7 +173,7 @@ def write_atlas_report(
 
     lines.append("=" * 80)
     lines.append("ATLAS SCANNER REPORT")
-    lines.append("Atlas Score V2 / SMC V5")
+    lines.append("Atlas Score V2 / SMC V5 / Report Writer V3")
     lines.append("=" * 80)
     lines.append(f"Generated At: {now}")
     lines.append("")
@@ -231,9 +265,20 @@ def _format_candidate(item):
     stop = _fmt_num(item.get("stop"))
     target = _fmt_num(item.get("target"))
     rr = _fmt_num(item.get("rr"))
+    rr_quality = item.get("rr_quality")
+    stop_distance = _fmt_num(item.get("stop_distance_percent"))
+    stop_adjusted = item.get("stop_adjusted")
+    target_source = item.get("target_source")
+    target_type = item.get("target_type")
     entry_distance = _fmt_num(item.get("entry_distance_percent"))
 
+    conflict_level = item.get("conflict_level")
+    conflict_reason = item.get("conflict_reason")
+    trigger_status = item.get("trigger_status")
+    trigger_score = item.get("trigger_score")
+
     smc = item.get("smc", {}) or {}
+    mtf_context = smc.get("mtf_context", {}) or {}
 
     lines = []
 
@@ -247,14 +292,47 @@ def _format_candidate(item):
     lines.append(f"  MQS                : {mqs}")
     lines.append(f"  Trend Score        : {trend_score}")
     lines.append(f"  Setup Score        : {setup_score}")
+    lines.append(f"  Conflict Level     : {_safe(conflict_level)}")
+    lines.append(f"  Conflict Reason    : {_safe(conflict_reason)}")
     lines.append("  Setup Reasons:")
     lines.extend(_fmt_reasons(item.get("setup_reasons")))
+    lines.append("  Trigger Reasons:")
+    lines.extend(_fmt_reasons(item.get("trigger_reasons")))
     lines.append(f"  SMC Score          : {smc_score}")
     lines.append(f"  Entry              : {entry}")
     lines.append(f"  Stop               : {stop}")
     lines.append(f"  Target             : {target}")
     lines.append(f"  RR                 : {rr}")
+    lines.append(f"  RR Quality         : {_safe(rr_quality)}")
+    lines.append(f"  Stop Distance %    : {stop_distance}")
+    lines.append(f"  Stop Adjusted      : {stop_adjusted}")
+    lines.append(f"  Target Source      : {_safe(target_source)}")
+    lines.append(f"  Target Type        : {_safe(target_type)}")
     lines.append(f"  Entry Distance %   : {entry_distance}")
+    lines.append(f"  Trigger Status     : {_safe(trigger_status)}")
+    lines.append(f"  Trigger Score      : {_safe(trigger_score)}")
+
+    lines.append("")
+    lines.append("  Entry Sequence")
+    lines.append(f"  Sequence State     : {_safe(item.get('entry_sequence_state'))}")
+    lines.append(f"  Sequence Score     : {_safe(item.get('entry_sequence_score'))}")
+    lines.append(f"  CISD               : {item.get('has_cisd', False)}")
+    lines.append(f"  MSS                : {item.get('has_mss', False)}")
+    lines.append(f"  Sequence Zone      : {_fmt_zone(item.get('sequence_zone'))}")
+    lines.append(f"  Timing Advice      : {_safe(item.get('timing_advice'))}")
+    lines.append("  Sequence Reasons:")
+    lines.extend(_fmt_reasons(item.get("entry_sequence_reasons")))
+
+    lines.append("")
+    lines.append("  Derivatives / Session")
+    lines.append(f"  Derivatives Bonus  : {_safe(item.get('derivatives_bonus'))}")
+    lines.append(f"  OI Change %        : {_safe(item.get('oi_change_percent'))}")
+    lines.append(f"  CVD Proxy          : {_fmt_num(item.get('cvd_proxy'))}")
+    lines.append(f"  Session            : {_safe(item.get('session_name'))}")
+    lines.append("  Derivatives Reasons:")
+    lines.extend(_fmt_reasons(item.get("derivatives_reasons")))
+    lines.append("  Atlas Bonus Reasons:")
+    lines.extend(_fmt_reasons(item.get("atlas_bonus_reasons")))
 
     if smc:
         lines.append("")
@@ -281,6 +359,21 @@ def _format_candidate(item):
         lines.append(f"  Internal BOS       : {_safe(smc.get('internal_bos'))}")
         lines.append(f"  Internal CHoCH     : {_safe(smc.get('internal_choch'))}")
         lines.append(f"  Internal Broken    : {_safe(smc.get('internal_last_broken_level'))}")
+
+        lines.append("")
+        lines.append("  MTF Context")
+        lines.append(f"  MTF Enabled        : {mtf_context.get('mtf_enabled', False)}")
+        lines.append(f"  MTF Bias           : {_safe(mtf_context.get('mtf_bias'))}")
+        lines.append(
+            f"  MTF Alignment      : "
+            f"{_safe((mtf_context.get('mtf_alignment') or {}).get('alignment'))}"
+        )
+        lines.append(
+            f"  MTF Counts         : "
+            f"{_fmt_mtf_counts(mtf_context.get('mtf_direction_counts'))}"
+        )
+        lines.append("  MTF Timeframes:")
+        lines.extend(_format_mtf_timeframes(mtf_context.get("timeframes", [])))
 
         lines.append("")
         lines.append("  SMC Zones / Liquidity")

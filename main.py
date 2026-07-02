@@ -1,4 +1,6 @@
 import asyncio
+import logging
+from pathlib import Path
 
 from scanner.bingx import (
     get_swap_contracts,
@@ -9,12 +11,39 @@ from scanner.bingx import (
 from scanner.coingecko import get_top_coins
 from scoring.matcher import match_contracts_with_coins
 from scoring.async_market_metrics import get_market_metrics_bulk
+from scoring.derivatives_engine import calculate_derivatives_score
 from scoring.hard_filters import passes_hard_filters
 from scoring.market_quality import calculate_market_quality
+from storage import journal
+from strategy.session_engine import get_session_context
 from strategy.trend_engine import calculate_trend_score
 from strategy.setup_engine import calculate_setup_score
 from strategy.smc_engine import detect_structure
 from reports.report_writer import write_atlas_report
+
+
+def setup_logging():
+    log_dir = Path("logs")
+    log_dir.mkdir(exist_ok=True)
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s | %(levelname)s | %(message)s",
+        handlers=[
+            logging.FileHandler(log_dir / "atlas.log", encoding="utf-8"),
+            logging.StreamHandler(),
+        ],
+    )
+
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+
+    return logging.getLogger("atlas")
+
+
+CONFLICT_WATCH_SCORE_CAP = 62
+RANGE_WATCH_SCORE_CAP = 58
+MTF_CONFLICT_SCORE_CAP = 60
 
 
 def get_ticker_map(tickers):
@@ -41,8 +70,57 @@ def raw_atlas_score(mqs, trend_score, setup_score, smc_score):
         2,
     )
 
+def calculate_trigger_bonus(trigger_status):
+    if trigger_status == "TRIGGER_READY":
+        return 8
 
-def apply_score_caps(score, setup_status, setup_type, trend_direction):
+    if trigger_status == "TRIGGER_ARMED":
+        return 4
+
+    if trigger_status == "TRIGGER_WATCH":
+        return 1
+
+    return 0
+
+def get_smc_direction(structure):
+    if not structure:
+        return "NEUTRAL"
+
+    if structure.startswith("BULLISH"):
+        return "BULLISH"
+
+    if structure.startswith("BEARISH"):
+        return "BEARISH"
+
+    return "NEUTRAL"
+
+
+def has_trend_smc_conflict(trend_direction, structure):
+    smc_direction = get_smc_direction(structure)
+
+    if trend_direction == "BULLISH" and smc_direction == "BEARISH":
+        return True
+
+    if trend_direction == "BEARISH" and smc_direction == "BULLISH":
+        return True
+
+    return False
+
+
+def is_range_structure(structure):
+    return get_smc_direction(structure) == "NEUTRAL"
+
+
+def has_mtf_conflict(item):
+    return item.get("mtf_alignment") == "MTF_CONFLICT"
+
+
+def apply_score_caps(score, item):
+    setup_status = item.get("setup_status")
+    setup_type = item.get("setup_type")
+    trend_direction = item.get("trend_direction")
+    structure = item.get("structure", "RANGE")
+
     if setup_type == "WAIT_STRUCTURE_CONFLICT":
         return min(score, 40)
 
@@ -52,30 +130,56 @@ def apply_score_caps(score, setup_status, setup_type, trend_direction):
     if trend_direction == "NEUTRAL":
         return min(score, 50)
 
+    if setup_status == "WATCH" and has_trend_smc_conflict(trend_direction, structure):
+        return min(score, CONFLICT_WATCH_SCORE_CAP)
+
+    if setup_status == "WATCH" and is_range_structure(structure):
+        return min(score, RANGE_WATCH_SCORE_CAP)
+
+    if setup_status == "WATCH" and has_mtf_conflict(item):
+        return min(score, MTF_CONFLICT_SCORE_CAP)
+
     return score
 
 
-def calculate_atlas_score(
-    mqs,
-    trend_score,
-    setup_score,
-    smc_score,
-    setup_status,
-    setup_type,
-    trend_direction,
-):
+def calculate_atlas_score(item, session_context=None):
     score = raw_atlas_score(
-        mqs,
-        trend_score,
-        setup_score,
-        smc_score,
+        item.get("market_quality_score", 0),
+        item.get("trend_score", 0),
+        item.get("setup_score", 0),
+        item.get("smc_score", 0),
     )
 
+    bonus_reasons = []
+
+    trigger_bonus = calculate_trigger_bonus(item.get("trigger_status"))
+    score += trigger_bonus
+
+    if trigger_bonus:
+        bonus_reasons.append(f"Trigger bonusu: +{trigger_bonus}")
+
+    derivatives_bonus = item.get("derivatives_bonus", 0) or 0
+    score += derivatives_bonus
+
+    if derivatives_bonus:
+        sign = "+" if derivatives_bonus > 0 else ""
+        bonus_reasons.append(f"Derivatives bonusu: {sign}{derivatives_bonus}")
+
+    if session_context:
+        session_bonus = session_context.get("session_bonus", 0)
+        score += session_bonus
+
+        if session_bonus:
+            sign = "+" if session_bonus > 0 else ""
+            bonus_reasons.append(
+                f"Session ({session_context.get('session_name')}): {sign}{session_bonus}"
+            )
+
+    item["atlas_bonus_reasons"] = bonus_reasons
+
     return apply_score_caps(
-        score,
-        setup_status,
-        setup_type,
-        trend_direction,
+        score=round(score, 2),
+        item=item,
     )
 
 
@@ -97,8 +201,22 @@ def print_candidate(item):
         "| SMC:",
         item.get("smc_score"),
         item.get("structure"),
+        "| MTF:",
+        item.get("mtf_bias"),
+        item.get("mtf_alignment"),
+        "| Trigger:",
+        item.get("trigger_status"),
+        item.get("trigger_score"),
+        "| Seq:",
+        item.get("entry_sequence_state"),
+        "| TriggerReason:",
+        " / ".join((item.get("trigger_reasons") or ["-"])[:3]),
         "| RR:",
         item["rr"],
+        "| Price:",
+        item.get("current_price"),
+        "| EntryState:",
+        item.get("entry_state"),
         "| Entry:",
         item.get("entry"),
         "| Stop:",
@@ -121,12 +239,22 @@ def build_stats(contracts, usdt_contracts, matched_contracts, passed):
 
 
 def main():
+    logger = setup_logging()
+
     print("=" * 50)
     print("ATLAS SCANNER V1")
-    print("Atlas Score V2 / SMC V5")
+    print("Atlas Score V3 / SMC V5 / Entry Sequence V1")
     print("=" * 50)
 
     try:
+        journal.init_db()
+
+        session_context = get_session_context()
+        print(
+            f"\nSession: {session_context['session_name']} "
+            f"(UTC {session_context['utc_hour']}:00) — {session_context['session_reason']}"
+        )
+
         contracts = get_swap_contracts()
         tickers = get_24h_tickers()
         ticker_map = get_ticker_map(tickers)
@@ -205,6 +333,15 @@ def main():
             )
             item.update(setup)
 
+            previous_metrics = journal.get_previous_metrics(symbol)
+            derivatives = calculate_derivatives_score(
+                item,
+                previous_metrics=previous_metrics,
+            )
+            item.update(derivatives)
+
+            item["session_name"] = session_context["session_name"]
+
             item["atlas_raw_score"] = raw_atlas_score(
                 item.get("market_quality_score", 0),
                 item.get("trend_score", 0),
@@ -213,13 +350,8 @@ def main():
             )
 
             item["atlas_score"] = calculate_atlas_score(
-                item.get("market_quality_score", 0),
-                item.get("trend_score", 0),
-                item.get("setup_score", 0),
-                item.get("smc_score", 0),
-                item.get("setup_status"),
-                item.get("setup_type"),
-                item.get("trend_direction"),
+                item,
+                session_context=session_context,
             )
 
             passed.append(item)
@@ -253,6 +385,40 @@ def main():
         save_json(wait, "atlas_wait.json")
         save_json(failed, "market_quality_failed.json")
 
+        price_map = {
+            item["symbol"]: item.get("current_price") or item.get("last_price")
+            for item in passed
+        }
+        outcomes = journal.resolve_open_setups(price_map)
+
+        if any(outcomes.values()):
+            print(
+                f"\n📒 Journal: {outcomes['tp']} TP_HIT, "
+                f"{outcomes['sl']} SL_HIT, {outcomes['expired']} EXPIRED olarak etiketlendi"
+            )
+
+        journal.record_scan(
+            passed_items=passed,
+            failed_count=len(failed),
+            session_name=session_context["session_name"],
+            counts={
+                "ready": len(ready),
+                "watch": len(watch),
+                "wait": len(wait),
+            },
+        )
+
+        outcome_stats = journal.get_outcome_stats()
+
+        if outcome_stats:
+            print("\n📊 Sequence bazlı gerçek başarı oranları (journal):")
+            for stat in outcome_stats:
+                print(
+                    f"  {stat['sequence_state'] or 'UNKNOWN'}: "
+                    f"%{stat['win_rate_percent']} "
+                    f"({stat['wins']}W / {stat['losses']}L)"
+                )
+
         stats = build_stats(
             contracts,
             usdt_contracts,
@@ -281,6 +447,9 @@ def main():
         print("\n🟢 READY adayları:")
         for item in ready[:10]:
             print_candidate(item)
+            advice = item.get("timing_advice")
+            if advice:
+                print(f"    ⏱  Zamanlama: {advice}")
 
         print("\n🟡 WATCH adayları:")
         for item in watch[:10]:
@@ -290,9 +459,9 @@ def main():
         for item in wait[:10]:
             print_candidate(item)
 
-    except Exception as e:
-        print("\n❌ Hata oluştu:")
-        print(e)
+    except Exception:
+        logger.exception("Tarama sırasında hata oluştu")
+        print("\n❌ Hata oluştu — detay için logs/atlas.log dosyasına bak")
 
 
 if __name__ == "__main__":
