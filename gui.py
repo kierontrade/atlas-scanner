@@ -78,7 +78,7 @@ class AtlasApp(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        self.title("ATLAS — SMC Trade Intelligence Engine")
+        self.title("KieronTradeEngine — SMC Trade Intelligence")
         self.geometry("1150x720")
         self.minsize(950, 600)
 
@@ -101,7 +101,7 @@ class AtlasApp(ctk.CTk):
 
         title = ctk.CTkLabel(
             header,
-            text="  ATLAS",
+            text="  KieronTradeEngine",
             font=ctk.CTkFont(size=26, weight="bold"),
         )
         title.pack(side="left", padx=(15, 5), pady=12)

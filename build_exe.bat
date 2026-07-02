@@ -1,14 +1,14 @@
 @echo off
-REM ATLAS masaustu EXE derleme
-REM Cikti: dist\ATLAS.exe
+REM KieronTradeEngine masaustu EXE derleme
+REM Cikti: dist\KieronTradeEngine.exe
 
 python -m PyInstaller ^
     --onefile ^
     --windowed ^
-    --name ATLAS ^
+    --name KieronTradeEngine ^
     --collect-all customtkinter ^
     gui.py
 
 echo.
-echo Derleme tamamlandi: dist\ATLAS.exe
+echo Derleme tamamlandi: dist\KieronTradeEngine.exe
 pause
